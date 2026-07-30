@@ -1,0 +1,6 @@
+writable/
+.env
+hellow.go
+tmp/
+go-app
+/main

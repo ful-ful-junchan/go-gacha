@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"go-app/internal/handler"
 	"go-app/internal/service"
@@ -20,6 +21,9 @@ func main() {
 	srv := &http.Server{
 		Addr:         ":8080",
 		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	// サーバーを起動

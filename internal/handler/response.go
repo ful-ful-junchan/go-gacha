@@ -2,13 +2,23 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
+	body, err := json.Marshal(v)
+	if err != nil {
+		log.Printf("writeJSON: failed to marshal response: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if _, err := w.Write(body); err != nil {
+		log.Printf("writeJSON: failed to write response: %v", err)
+	}
 }
 
 type errorResponse struct {

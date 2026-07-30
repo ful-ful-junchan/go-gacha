@@ -14,6 +14,7 @@ type GachaHandler struct {
 type GachaSample struct {
 	ID   uint64 `json:"id"`
 	Name string `json:"name"`
+	PityThreshold uint64 `json:"pity_threshold"`
 }
 
 func NewGachaHandler(svc *service.GachaService) *GachaHandler {
@@ -28,9 +29,15 @@ func (h *GachaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	info, err := h.svc.GetGachaInfo(r.Context(), gachaID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "gacha not found")
+		return
+	}
+
 	// 暫定レスポンス
 	resp := []GachaSample{
-		{ID: gachaID, Name: "暫定ガチャ"},
+		{ID: info.GachaID, Name: info.Name, PityThreshold: info.PityThreshold},
 	}
 
 	writeJSON(w, http.StatusOK, resp)

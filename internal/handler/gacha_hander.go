@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
+	"go-app/internal/repository"
 	"go-app/internal/service"
 )
 
@@ -30,8 +32,12 @@ func (h *GachaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info, err := h.svc.GetGachaInfo(r.Context(), gachaID)
-	if err != nil {
+	if errors.Is(err, repository.ErrNotFound) {
 		writeError(w, http.StatusNotFound, "gacha not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"time"
 	"os"
-	
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"go-app/internal/handler"
@@ -19,6 +20,12 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := db.PingContext(pingCtx); err != nil {
+		log.Fatal(err)
+	}
 
 	mux := http.NewServeMux()
 

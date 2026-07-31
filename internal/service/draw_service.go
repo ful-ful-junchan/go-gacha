@@ -76,13 +76,26 @@ func (s *DrawService) Draw(ctx context.Context, gachaID, userID uint64, count in
 
 	random := CryptoRandomizer{}
 
+	// 現在のSSR確定までのカウント値を取得
+	pityCount, err := repository.GetPityCount(ctx, tans, userID, gachaID)
+	if err != nil {
+		return nil, err
+	}
+
 	// 抽選処理
 	results := make([]DrawResultItem, 0, count)
 	for i := 0; i < count; i++ {
+		// SSR確定判定
+		isPity := pityCount >= gacha.PityThreshold
+
 		// レアリティ抽選を実施
-		rarity, err := drawRarity(random, weightByRarity)
-		if err != nil {
-			return nil, err
+		rarity := model.RaritySSR
+		if !isPity {
+			var err error
+			rarity, err = drawRarity(random, weightByRarity)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// 抽選対象アイテムからランダムに１件取得
@@ -96,15 +109,23 @@ func (s *DrawService) Draw(ctx context.Context, gachaID, userID uint64, count in
 		}
 		item := tempItems[idx]
 
+		// SSRが出たら天井カウントをリセット
+		// SSRじゃなければカウントを加算
+		if rarity == model.RaritySSR {
+			pityCount = 0
+		} else {
+			pityCount++
+		}
+
 		// 抽選結果を保存
 		history := model.GachaHistory{
 			UserID:  userID,
 			GachaID: gachaID,
 			ItemID:  item.ItemID,
-			IsPity:  false,
+			IsPity:  isPity,
 			DrawnAt: now,
 			CreatedAt: now,
-			UpdatedAt: now
+			UpdatedAt: now,
 		}
 		if err := repository.InsertGachaHistory(ctx, tans, history); err != nil {
 			return nil, err
@@ -115,13 +136,18 @@ func (s *DrawService) Draw(ctx context.Context, gachaID, userID uint64, count in
 			ItemID:   item.ItemID,
 			ItemName: item.ItemName,
 			Rarity:   item.Rarity,
-			IsPity:   false,
+			IsPity:   isPity,
 		})
+	}
+
+	// SSR確定のカウントアップ処理
+	if err := repository.UpsertPityCount(ctx, tans, userID, gachaID, pityCount); err != nil {
+		return nil, err
 	}
 
 	if err := tans.Commit(); err != nil {
 		return nil, err
 	}
 
-	return &DrawResult{Results: results, PityCount: 0}, nil
+	return &DrawResult{Results: results, PityCount: pityCount}, nil
 }

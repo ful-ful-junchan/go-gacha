@@ -32,8 +32,13 @@ func main() {
 	// ガチャ情報取得
 	gachaSvc := service.NewGachaService(db)
 	gachaHandler := handler.NewGachaHandler(gachaSvc)
+	// 抽選
+	drawSvc := service.NewDrawService(db)
+	drawHandler := handler.NewDrawHandler(drawSvc);
 
+	// ルーティング定義
 	mux.HandleFunc("GET /gachas/{gacha_id}", gachaHandler.ServeHTTP)
+	mux.HandleFunc("POST /gachas/{gacha_id}/draw", drawHandler.ServeHTTP)
 
 	srv := &http.Server{
 		Addr:         ":8080",

@@ -1,4 +1,4 @@
-.PHONY: build up down stop restart
+.PHONY: build up down stop restart go
 
 build:
 	docker compose build
@@ -14,3 +14,6 @@ stop:
 
 restart:
 	docker compose restart
+
+go:
+	go build ./... && docker compose restart api

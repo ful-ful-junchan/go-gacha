@@ -96,6 +96,20 @@ func (s *DrawService) Draw(ctx context.Context, gachaID, userID uint64, count in
 		}
 		item := tempItems[idx]
 
+		// 抽選結果を保存
+		history := model.GachaHistory{
+			UserID:  userID,
+			GachaID: gachaID,
+			ItemID:  item.ItemID,
+			IsPity:  false,
+			DrawnAt: now,
+			CreatedAt: now,
+			UpdatedAt: now
+		}
+		if err := repository.InsertGachaHistory(ctx, tans, history); err != nil {
+			return nil, err
+		}
+
 		// 結果を返す
 		results = append(results, DrawResultItem{
 			ItemID:   item.ItemID,

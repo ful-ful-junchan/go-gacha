@@ -31,9 +31,9 @@ type DrawResult struct {
 	PityCount uint64
 }
 
-var ErrInvalidCount = errors.New("invalid draw count.")
-var ErrGachaClosed = errors.New("gacha closed.")
-var ErrGachaItemsNone = errors.New("gacha items not found.")
+var ErrInvalidCount = errors.New("invalid draw count")
+var ErrGachaClosed = errors.New("gacha closed")
+var ErrGachaItemsNone = errors.New("gacha items not found")
 
 // ガチャ抽選処理
 func (s *DrawService) Draw(ctx context.Context, gachaID, userID uint64, count int) (*DrawResult, error) {
@@ -47,7 +47,7 @@ func (s *DrawService) Draw(ctx context.Context, gachaID, userID uint64, count in
 	if err != nil {
 		return nil, err
 	}
-	defer tans.Rollback()
+	defer func() { _ = tans.Rollback() }()
 
 	// ガチャ情報取得
 	gacha, err := repository.FindGachaByID(ctx, tans, gachaID)

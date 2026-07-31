@@ -1,9 +1,14 @@
 package service
 
 import (
+	"errors"
+
 	"go-app/internal/model"
 	"go-app/internal/repository"
 )
+
+// ErrZeroWeight はレアリティ毎のweight合計が0のときに返される。
+var ErrZeroWeight = errors.New("total weight is zero")
 
 // rarityOrder はレアリティの走査順を固定するためのもの。
 // mapのイテレーション順はGoでは保証されないため、累積分布の計算やテストの再現性のために順序を固定する。
@@ -38,6 +43,9 @@ func sumAllWeights(weightByRarity map[model.Rarity]uint64) uint64 {
 // drawRarity は各レアリティのweight合計に基づいて1つのレアリティを重み抽選
 func drawRarity(rng Randomizer, weightByRarity map[model.Rarity]uint64) (model.Rarity, error) {
 	total := sumAllWeights(weightByRarity)
+	if total == 0 {
+		return "", ErrZeroWeight
+	}
 	v, err := rng.Intn(int(total))
 	if err != nil {
 		return "", err

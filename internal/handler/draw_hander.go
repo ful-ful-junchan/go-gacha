@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
-	"encoding/json"
 
+	"go-app/internal/repository"
 	"go-app/internal/service"
 )
 
@@ -53,7 +55,17 @@ func (h *DrawHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// 抽選実行
 	result, err := h.svc.Draw(r.Context(), gachaID, *req.UserID, req.Count)
-	if err != nil {
+	switch {
+	case errors.Is(err, service.ErrInvalidCount):
+		writeError(w, http.StatusBadRequest, "invalid count")
+		return
+	case errors.Is(err, service.ErrGachaClosed):
+		writeError(w, http.StatusConflict, "gacha closed")
+		return
+	case errors.Is(err, repository.ErrNotFound):
+		writeError(w, http.StatusNotFound, "gacha not found")
+		return
+	case err != nil:
 		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}

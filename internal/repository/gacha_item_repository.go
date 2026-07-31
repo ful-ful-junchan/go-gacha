@@ -23,7 +23,7 @@ func FindGachaItemsByGachaID(ctx context.Context, db Executor, gachaID uint64) (
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var gachaItems []GachaItemEntry
 	for rows.Next() {
